@@ -1,0 +1,16 @@
+{
+  "mirai": {
+    "qq": 123456,
+    "host": "localhost",
+    "port": 3399,
+    "auth_key": "qwerty"
+  },
+  "general": {
+    "trigger": "看看番",
+    "fetch_duration": 7200
+  },
+  "notify": {
+    "friend": [114514],
+    "group": [1919810]
+  }
+}
