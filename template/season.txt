@@ -1,0 +1,7 @@
+{{define "season" -}}
+{{if .Delay -}}
+（{{.DelayReason}}） {{.Title}} - {{.DelayIndex}}
+{{- else -}}
+（{{.PubTime.Format "15:04"}}） {{.Title}} - {{.PubIndex}}
+{{- end}}
+{{- end}}

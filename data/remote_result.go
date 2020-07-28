@@ -26,6 +26,8 @@ type DaySeasons struct {
 type Season struct {
 	Cover        string `json:"cover"`
 	Delay        int    `json:"delay"`
+	DelayIndex   string `json:"delay_index"`
+	DelayReason  string `json:"delay_reason"`
 	EpId         int64  `json:"ep_id"`
 	Favorites    int64  `json:"favorites"`
 	Follow       int    `json:"follow"`
@@ -39,12 +41,6 @@ type Season struct {
 	SquareCover  string `json:"square_cover"`
 	Title        string `json:"title"`
 	Url          string `json:"url"`
-}
-
-func (s Season) String() string {
-	return fmt.Sprintf("(%s) %s - %s",
-		s.PubTime.Format("1-2 15:04"),
-		s.Title, s.PubIndex)
 }
 
 func FetchRemote() ([]Season, error) {

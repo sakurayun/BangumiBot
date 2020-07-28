@@ -2,7 +2,7 @@ package main
 
 import (
 	"BangumiBot/data"
-	"bytes"
+	"BangumiBot/templater"
 	"encoding/json"
 	"fmt"
 	"github.com/Logiase/gomirai"
@@ -36,38 +36,6 @@ func loadConfig() error {
 		}
 	}
 	return json.Unmarshal(b, &config)
-}
-
-func tryAuth() {
-	ticker := time.Tick(5 * time.Second)
-
-	for {
-		ok := true
-
-		key, err := client.Auth()
-		if err != nil {
-			client.Logger.Error(err)
-			ok = false
-		}
-		bot, err = client.Verify(config.Mirai.QQ, key)
-		if err != nil {
-			client.Logger.Error(err)
-			ok = false
-		}
-
-		if ok {
-			break
-		} else {
-			<-ticker
-		}
-	}
-}
-
-func onExit() {
-	err := client.Release(config.Mirai.QQ)
-	if err != nil {
-		client.Logger.Warn(err)
-	}
 }
 
 func main() {
@@ -116,19 +84,10 @@ func main() {
 	}
 }
 
-func reply(e message.Event, msg ...message.Message) {
-	src := e.MessageChain[0].Id
-
-	var err error
-	switch e.Type {
-	case message.EventReceiveFriendMessage:
-		_, err = bot.SendFriendMessage(e.Sender.Id, src, msg...)
-	case message.EventReceiveGroupMessage:
-		_, err = bot.SendGroupMessage(e.Sender.Group.Id, src, msg...)
-	}
-
+func onExit() {
+	err := client.Release(config.Mirai.QQ)
 	if err != nil {
-		client.Logger.Error(err)
+		client.Logger.Warn(err)
 	}
 }
 
@@ -137,23 +96,20 @@ func onReceiveMessage(e message.Event) {
 		return
 	}
 
-	now := time.Now()
-
-	buffer := bytes.Buffer{}
+	y, m, d := time.Now().Date()
+	seasons := make([]data.Season, 0)
 	for _, s := range producer.Seasons() {
-		y, m, d := s.PubTime.Date()
-		y2, m2, d2 := now.Date()
+		y2, m2, d2 := s.PubTime.Date()
 		if y == y2 && m == m2 && d == d2 {
-			buffer.WriteString(s.String())
-			buffer.WriteRune('\n')
+			seasons = append(seasons, s)
 		}
 	}
 
-	reply(e, message.PlainMessage(buffer.String()))
+	reply(e, message.PlainMessage(templater.QueryReply(seasons)))
 }
 
 func onPubSeason(s data.Season) {
-	msg := message.PlainMessage(s.String())
+	msg := message.PlainMessage(templater.PubNotice(s))
 
 	for _, fid := range config.Notify.Friend {
 		_, err := bot.SendFriendMessage(fid, 0, msg)
