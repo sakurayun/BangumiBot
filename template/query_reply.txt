@@ -1,4 +1,3 @@
-（Go Version）
 今天是 {{now.Format "2006-01-02"}}，共有 {{len .}} 部番剧更新。
 {{range . -}}
 {{template "season" .}}

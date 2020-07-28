@@ -1,3 +1,2 @@
-（Go Version）
 {{template "season" .}} 更新了！
 {{.Url}}
