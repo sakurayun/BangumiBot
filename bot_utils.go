@@ -16,7 +16,7 @@ func tryAuth() {
 			client.Logger.Error(err)
 			ok = false
 		}
-		bot, err = client.Verify(config.Mirai.QQ, key)
+		bot, err = client.Verify(conf.Mirai.QQ, key)
 		if err != nil {
 			client.Logger.Error(err)
 			ok = false
@@ -30,6 +30,13 @@ func tryAuth() {
 		}
 	}
 	client.Logger.Info("authed successfully")
+}
+
+func shutdownBot() {
+	err := client.Release(conf.Mirai.QQ)
+	if err != nil {
+		client.Logger.Warn(err)
+	}
 }
 
 func reply(e message.Event, msg ...message.Message) {

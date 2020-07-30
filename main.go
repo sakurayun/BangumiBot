@@ -1,14 +1,13 @@
 package main
 
 import (
+	"BangumiBot/config"
 	"BangumiBot/data"
 	"BangumiBot/templater"
-	"encoding/json"
 	"fmt"
 	"github.com/Logiase/gomirai"
 	"github.com/Logiase/gomirai/message"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"time"
@@ -16,46 +15,22 @@ import (
 
 var client *gomirai.Client
 var bot *gomirai.Bot
-var config Config
+var conf config.Config
 var producer = data.NewSeasonProducer()
-
-func loadConfig() error {
-	b, err := ioutil.ReadFile("config.json")
-	if err != nil {
-		if os.IsNotExist(err) {
-			config = DefaultConfig
-			b, err = json.Marshal(DefaultConfig)
-			if err != nil {
-				return err
-			}
-			err = ioutil.WriteFile("config.json", b, 0644)
-			if err != nil {
-				return err
-			}
-		} else {
-			return err
-		}
-	}
-	err = json.Unmarshal(b, &config)
-	if err != nil {
-		return err
-	}
-	logrus.Info("config file was loaded successfully")
-	return nil
-}
 
 func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	err := loadConfig()
+	var err error
+	conf, err = config.LoadConfig("config.json")
 	if err != nil {
 		logrus.Error(err)
 	}
 
 	// 初始化Bot部分
-	url := fmt.Sprintf("http://%s:%d", config.Mirai.Host, config.Mirai.Port)
-	client = gomirai.NewClient("default", url, config.Mirai.AuthKey)
+	url := fmt.Sprintf("http://%s:%d", conf.Mirai.Host, conf.Mirai.Port)
+	client = gomirai.NewClient("default", url, conf.Mirai.AuthKey)
 	tryAuth()
 	defer shutdownBot()
 
@@ -70,7 +45,7 @@ func main() {
 		}
 	}()
 
-	producer.Start(config.General.FetchDuration * time.Second)
+	producer.Start(time.Duration(conf.General.FetchDuration) * time.Second)
 
 	// 开始监听消息
 	for true {
@@ -90,15 +65,8 @@ func main() {
 	}
 }
 
-func shutdownBot() {
-	err := client.Release(config.Mirai.QQ)
-	if err != nil {
-		client.Logger.Warn(err)
-	}
-}
-
 func onReceiveMessage(e message.Event) {
-	if len(e.MessageChain) <= 1 || e.MessageChain[1].Text != config.General.Trigger {
+	if len(e.MessageChain) <= 1 || e.MessageChain[1].Text != conf.General.Trigger {
 		return
 	}
 
@@ -117,14 +85,14 @@ func onReceiveMessage(e message.Event) {
 func onPubSeason(s data.Season) {
 	msg := message.PlainMessage(templater.PubNotice(s))
 
-	for _, fid := range config.Notify.Friend {
+	for _, fid := range conf.Notify.Friend {
 		_, err := bot.SendFriendMessage(fid, 0, msg)
 		if err != nil {
 			client.Logger.Error(err)
 		}
 	}
 
-	for _, gid := range config.Notify.Group {
+	for _, gid := range conf.Notify.Group {
 		_, err := bot.SendGroupMessage(gid, 0, msg)
 		if err != nil {
 			client.Logger.Error(err)
