@@ -22,6 +22,8 @@ const (
 type SeasonProducer struct {
 	workQueue chan Query
 
+	fetchRemote func() ([]Season, error)
+
 	Chan    chan Season
 	all     []Season
 	pending []Season
@@ -32,6 +34,7 @@ type SeasonProducer struct {
 func NewSeasonProducer() *SeasonProducer {
 	return &SeasonProducer{
 		workQueue:   make(chan Query, 16),
+		fetchRemote: FetchRemote,
 		Chan:        make(chan Season, 16),
 		all:         []Season{},
 		pending:     []Season{},
@@ -47,9 +50,9 @@ func (p *SeasonProducer) manager() {
 			q.Result <- p.all
 		case qGetNextPending: // 获取下一个番剧
 			if len(p.pending) == 0 {
-				q.Result <- p.pending[0]
-			} else {
 				q.Result <- nil
+			} else {
+				q.Result <- p.pending[0]
 			}
 		case qUpdate: // 更新数据
 			data := q.Data.([]Season)
@@ -94,7 +97,7 @@ func (p *SeasonProducer) doDeliver() error {
 	head := p.pending[0]
 	p.Chan <- head
 	p.pending = p.pending[1:]
-	logrus.Info("deliver: ", head)
+	logrus.Infof("deliver: %s - %s", head.Title, head.PubIndex)
 	return nil
 }
 
@@ -119,7 +122,7 @@ func (p *SeasonProducer) poster() {
 		case <-wait: // poster: it's time to deliver the next pending season
 			ch := make(chan interface{})
 			p.workQueue <- Query{qDeliver, nil, ch}
-			if err, ok := <-ch; ok {
+			if err := <-ch; err != error(nil) {
 				logrus.Error(err)
 			}
 		case <-p.updateEvent: // manager: wake up now to see the next pending season
@@ -139,7 +142,7 @@ func (p *SeasonProducer) poster() {
 // 每隔2h从bilibili偷一次时间表
 func (p *SeasonProducer) updater(fetchDuration time.Duration) {
 	for true {
-		s, err := FetchRemote()
+		s, err := p.fetchRemote()
 		if err != nil {
 			logrus.Error(err)
 		}
