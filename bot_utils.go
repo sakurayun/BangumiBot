@@ -39,6 +39,8 @@ func reply(e message.Event, msg ...message.Message) {
 		_, err = bot.SendFriendMessage(e.Sender.Id, src, msg...)
 	case message.EventReceiveGroupMessage:
 		_, err = bot.SendGroupMessage(e.Sender.Group.Id, src, msg...)
+	case message.EventReceiveTempMessage:
+		_, err = bot.SendTempMessage(e.Sender.Group.Id, e.Sender.Id, msg...)
 	}
 
 	if err != nil {
