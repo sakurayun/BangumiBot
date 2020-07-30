@@ -25,9 +25,11 @@ func tryAuth() {
 		if ok {
 			break
 		} else {
+			client.Logger.Info("will retry to auth in 5 secs")
 			<-ticker
 		}
 	}
+	client.Logger.Info("authed successfully")
 }
 
 func reply(e message.Event, msg ...message.Message) {

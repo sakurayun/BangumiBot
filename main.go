@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/Logiase/gomirai"
 	"github.com/Logiase/gomirai/message"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -35,27 +36,28 @@ func loadConfig() error {
 			return err
 		}
 	}
-	return json.Unmarshal(b, &config)
+	err = json.Unmarshal(b, &config)
+	if err != nil {
+		return err
+	}
+	logrus.Info("config file was loaded successfully")
+	return nil
 }
 
 func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
-	go func() {
-		<-interrupt
-		onExit()
-		os.Exit(0)
-	}()
 
 	err := loadConfig()
 	if err != nil {
-		fmt.Println(err)
+		logrus.Error(err)
 	}
 
 	// 初始化Bot部分
 	url := fmt.Sprintf("http://%s:%d", config.Mirai.Host, config.Mirai.Port)
 	client = gomirai.NewClient("default", url, config.Mirai.AuthKey)
 	tryAuth()
+	defer shutdownBot()
 
 	// 启动一个goroutine用于接收消息
 	go func() {
@@ -73,18 +75,22 @@ func main() {
 	// 开始监听消息
 	for true {
 		select {
+		case <-interrupt:
+			break
 		case s := <-producer.Chan:
 			onPubSeason(s)
 		case e := <-bot.Chan:
 			switch e.Type {
-			case message.EventReceiveFriendMessage, message.EventReceiveGroupMessage, message.EventReceiveTempMessage:
+			case message.EventReceiveFriendMessage,
+				message.EventReceiveGroupMessage,
+				message.EventReceiveTempMessage:
 				go onReceiveMessage(e)
 			}
 		}
 	}
 }
 
-func onExit() {
+func shutdownBot() {
 	err := client.Release(config.Mirai.QQ)
 	if err != nil {
 		client.Logger.Warn(err)
