@@ -92,7 +92,7 @@ func onExit() {
 }
 
 func onReceiveMessage(e message.Event) {
-	if e.MessageChain[1].Text != config.General.Trigger {
+	if len(e.MessageChain) <= 1 || e.MessageChain[1].Text != config.General.Trigger {
 		return
 	}
 
