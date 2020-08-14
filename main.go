@@ -3,7 +3,6 @@ package main
 import (
 	"BangumiBot/config"
 	"BangumiBot/data"
-	"BangumiBot/templater"
 	"fmt"
 	"github.com/Logiase/gomirai"
 	"github.com/Logiase/gomirai/message"
@@ -12,11 +11,6 @@ import (
 	"os/signal"
 	"time"
 )
-
-var client *gomirai.Client
-var bot *gomirai.Bot
-var conf config.Config
-var producer = data.NewSeasonProducer()
 
 func main() {
 	interrupt := make(chan os.Signal, 1)
@@ -79,11 +73,11 @@ func onReceiveMessage(e message.Event) {
 		}
 	}
 
-	reply(e, message.PlainMessage(templater.QueryReply(seasons)))
+	reply(e, message.PlainMessage(temp.QueryReply(seasons)))
 }
 
 func onPubSeason(s data.Season) {
-	msg := message.PlainMessage(templater.PubNotice(s))
+	msg := message.PlainMessage(temp.PubNotice(s))
 
 	for _, fid := range conf.Notify.Friend {
 		_, err := bot.SendFriendMessage(fid, 0, msg)
