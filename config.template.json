@@ -10,6 +10,7 @@
     "fetch_duration": 7200
   },
   "notify": {
+    "daily_notify_when": "00:00:00",
     "friend": [114514],
     "group": [1919810]
   }

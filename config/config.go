@@ -25,8 +25,9 @@ type GeneralConfig struct {
 }
 
 type NotifyConfig struct {
-	Friend []uint `json:"friend"`
-	Group  []uint `json:"group"`
+	DailyNotifyWhen string `json:"daily_notify_when"`
+	Friend          []uint `json:"friend"`
+	Group           []uint `json:"group"`
 }
 
 var DefaultConfig = Config{}
