@@ -9,6 +9,12 @@
 3. 确保目录中存在`template`子目录；
 4. 运行BangumiBot
 
+## 效果截图
+
+![每日提醒](https://raw.githubusercontent.com/ssttkkl/BangumiBot/master/img/1.png)
+
+![更新提醒](https://raw.githubusercontent.com/ssttkkl/BangumiBot/master/img/2.png)
+
 ## 修改回复模板
 
 修改`template`目录内相应文件（前提是你知道如何撰写Golang里的Template）
